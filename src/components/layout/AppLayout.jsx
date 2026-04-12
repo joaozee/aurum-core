@@ -33,7 +33,7 @@ export default function AppLayout() {
         />
       )}
       {showInstall && <InstallBanner onInstall={install} onDismiss={dismissInstall} />}
-      {notif.permissionState === "default" && <PermissionBanner onRequest={notif.requestPermission} />}
+      {notif.permissionState === "default" && <PermissionBanner />}
       <div className="flex flex-1 relative">
         <Sidebar
           collapsed={collapsed}
