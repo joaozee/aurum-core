@@ -1,0 +1,39 @@
+{
+  "name": "Notification",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "title": "Email do Usu\u00e1rio"
+    },
+    "type": {
+      "type": "string",
+      "title": "Tipo"
+    },
+    "title": {
+      "type": "string",
+      "title": "T\u00edtulo"
+    },
+    "body": {
+      "type": "string",
+      "title": "Corpo"
+    },
+    "link": {
+      "type": "string",
+      "title": "Link"
+    },
+    "read": {
+      "type": "boolean",
+      "title": "Lida",
+      "default": false
+    },
+    "icon": {
+      "type": "string",
+      "title": "\u00cdcone"
+    }
+  },
+  "required": [
+    "user_email",
+    "title"
+  ]
+}

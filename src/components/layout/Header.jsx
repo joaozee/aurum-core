@@ -1,8 +1,9 @@
-import { Search, Bell } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
+import NotificationCenter from "../notifications/NotificationCenter";
 
-export default function Header() {
+export default function Header({ notifications = [], unreadCount = 0, onMarkAllRead, onMarkRead }) {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
@@ -28,10 +29,12 @@ export default function Header() {
           </button>
         )}
       </div>
-      <button className="relative text-muted-foreground hover:text-foreground transition-colors">
-        <Bell className="w-[18px] h-[18px]" />
-        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-gold rounded-full" />
-      </button>
+      <NotificationCenter
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onMarkAllRead={onMarkAllRead}
+        onMarkRead={onMarkRead}
+      />
     </header>
   );
 }

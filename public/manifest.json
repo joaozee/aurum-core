@@ -1,0 +1,24 @@
+{
+  "name": "Aurum Core",
+  "short_name": "Aurum",
+  "description": "Sistema operacional interno do Aurum Club",
+  "start_url": "/",
+  "display": "standalone",
+  "theme_color": "#F5A623",
+  "background_color": "#0a0a0a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "https://media.base44.com/images/public/69dba7abbb8ffe19764df57a/eb0a40560_generated_image.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://media.base44.com/images/public/69dba7abbb8ffe19764df57a/eb0a40560_generated_image.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
