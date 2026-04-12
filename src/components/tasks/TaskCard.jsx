@@ -1,4 +1,4 @@
-import { Calendar, User } from "lucide-react";
+import { Calendar } from "lucide-react";
 import moment from "moment";
 
 const priorityStyles = {
@@ -18,6 +18,20 @@ export default function TaskCard({ task, onClick, provided }) {
       className="bg-card border border-border rounded-lg p-3 cursor-pointer hover:border-gold/30 transition-colors group"
     >
       <p className="text-sm font-medium text-foreground group-hover:text-gold transition-colors">{task.title}</p>
+      {/* Tag badges */}
+      {(task.tags || []).length > 0 && (
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {(task.tags || []).map(tag => (
+            <span
+              key={tag.name}
+              className="text-[10px] font-medium px-1.5 py-0.5 rounded"
+              style={{ background: tag.color + "22", color: tag.color }}
+            >
+              {tag.name}
+            </span>
+          ))}
+        </div>
+      )}
       {task.description && (
         <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{task.description}</p>
       )}

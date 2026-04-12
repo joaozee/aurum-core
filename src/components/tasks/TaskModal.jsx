@@ -1,4 +1,5 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import TaskTagPicker from "./TaskTagPicker";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -8,7 +9,7 @@ import { useState, useEffect } from "react";
 
 export default function TaskModal({ open, onClose, onSave, task }) {
   const [form, setForm] = useState({
-    title: "", description: "", priority: "medium", due_date: "", assignee_name: "", status: "todo",
+    title: "", description: "", priority: "medium", due_date: "", assignee_name: "", status: "todo", tags: [],
   });
 
   useEffect(() => {
@@ -20,9 +21,10 @@ export default function TaskModal({ open, onClose, onSave, task }) {
         due_date: task.due_date || "",
         assignee_name: task.assignee_name || "",
         status: task.status || "todo",
+        tags: task.tags || [],
       });
     } else {
-      setForm({ title: "", description: "", priority: "medium", due_date: "", assignee_name: "", status: "todo" });
+      setForm({ title: "", description: "", priority: "medium", due_date: "", assignee_name: "", status: "todo", tags: [] });
     }
   }, [task, open]);
 
@@ -66,6 +68,10 @@ export default function TaskModal({ open, onClose, onSave, task }) {
           <div>
             <Label className="text-xs text-muted-foreground">Responsável</Label>
             <Input value={form.assignee_name} onChange={e => setForm(f => ({ ...f, assignee_name: e.target.value }))} className="bg-secondary border-border mt-1" placeholder="Nome" />
+          </div>
+          <div>
+            <Label className="text-xs text-muted-foreground mb-1 block">Tags</Label>
+            <TaskTagPicker selected={form.tags} onChange={tags => setForm(f => ({ ...f, tags }))} />
           </div>
         </div>
         <DialogFooter>

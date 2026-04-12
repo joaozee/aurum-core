@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import TaskCard from "../components/tasks/TaskCard";
 import TaskModal from "../components/tasks/TaskModal";
+import TaskFilterBar from "../components/tasks/TaskFilterBar";
 
 const columns = [
   { id: "todo", title: "A Fazer", color: "bg-secondary", dotColor: "bg-gray-500" },
@@ -18,6 +19,7 @@ export default function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [activeTag, setActiveTag] = useState(null);
 
   useEffect(() => {
     base44.entities.Task.list("-created_date", 200).then(setTasks);
@@ -34,6 +36,10 @@ export default function Tasks() {
     setModalOpen(false);
     setEditing(null);
   };
+
+  const filteredTasks = activeTag
+    ? tasks.filter(t => (t.tags || []).some(tag => tag.name === activeTag.name))
+    : tasks;
 
   const onDragEnd = async (result) => {
     if (!result.destination) return;
@@ -58,10 +64,12 @@ export default function Tasks() {
         </Button>
       </div>
 
+      <TaskFilterBar activeTag={activeTag} onFilterChange={setActiveTag} tasks={tasks} />
+
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {columns.map(col => {
-            const colTasks = tasks.filter(t => t.status === col.id);
+            const colTasks = filteredTasks.filter(t => t.status === col.id);
             return (
               <Droppable droppableId={col.id} key={col.id}>
                 {(provided, snapshot) => (

@@ -42,6 +42,22 @@
     "assignee_name": {
       "type": "string",
       "title": "Nome do Respons\u00e1vel"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "color": {
+            "type": "string"
+          }
+        }
+      },
+      "title": "Tags",
+      "default": []
     }
   },
   "required": [
