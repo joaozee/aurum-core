@@ -32,12 +32,9 @@ export function useNotifications(user) {
     await showNotification(title, body, link || '/');
   };
 
-  const createNotification = useCallback(async (userEmail, { type, title, body, link, icon }) => {
-    await base44.entities.Notification.create({
-      user_email: userEmail,
-      type, title, body, link, icon,
-      read: false,
-    });
+  const createNotification = useCallback(async (_userEmail, { title, body, link }) => {
+    // DB records are created by the backend automation — only show browser notification here
+    await showNotification(title, body || title, link || '/');
   }, []);
 
   const markAllRead = async () => {
