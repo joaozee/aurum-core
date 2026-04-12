@@ -7,7 +7,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import moment from "moment";
 
 const statusLabel = { new: "Nova", analyzing: "Em Análise", approved: "Aprovada", rejected: "Rejeitada" };
@@ -61,6 +60,18 @@ export default function Ideas() {
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+        {filters.map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`shrink-0 text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              filter === f ? "bg-gold/15 text-gold border-gold/30" : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {filterLabels[f]}
+          </button>
+        ))}
+      </div>
 
       {/* Mobile FAB */}
       <button

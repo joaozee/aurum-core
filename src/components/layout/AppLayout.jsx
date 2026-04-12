@@ -25,16 +25,16 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: "#0a0a0a" }}>
+      {/* Mobile sidebar overlay - at root level to avoid stacking context issues */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
       {showInstall && <InstallBanner onInstall={install} onDismiss={dismissInstall} />}
       {notif.permissionState === "default" && <PermissionBanner onRequest={notif.requestPermission} />}
       <div className="flex flex-1 relative">
-        {/* Mobile overlay */}
-        {mobileOpen && (
-          <div
-            className="fixed inset-0 bg-black/50 z-30 md:hidden"
-            onClick={() => setMobileOpen(false)}
-          />
-        )}
         <Sidebar
           collapsed={collapsed}
           onToggle={() => setCollapsed(!collapsed)}
