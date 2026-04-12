@@ -32,14 +32,22 @@ export function useNotifications(user) {
     return result;
   };
 
-  const sendBrowserNotification = (title, body, link) => {
-    if (Notification.permission !== "granted") return;
-    const n = new Notification(title, {
-      body,
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-    });
-    if (link) n.onclick = () => { window.focus(); window.location.href = link; };
+  const sendBrowserNotification = async (title, body, link) => {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      const reg = await navigator.serviceWorker.ready;
+      await reg.showNotification(title, {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        vibrate: [200, 100, 200],
+        data: { url: link || '/' },
+        actions: [{ action: 'open', title: 'Abrir' }],
+      });
+    } catch {
+      // Fallback for desktop browsers without SW support
+      new Notification(title, { body, icon: '/icon-192.png' });
+    }
   };
 
   const createNotification = useCallback(async (userEmail, { type, title, body, link, icon }) => {
