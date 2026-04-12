@@ -1,0 +1,26 @@
+{
+  "name": "Message",
+  "type": "object",
+  "properties": {
+    "conversation_id": {
+      "type": "string",
+      "title": "ID da Conversa"
+    },
+    "text": {
+      "type": "string",
+      "title": "Texto"
+    },
+    "sender_name": {
+      "type": "string",
+      "title": "Nome do Remetente"
+    },
+    "sender_email": {
+      "type": "string",
+      "title": "Email do Remetente"
+    }
+  },
+  "required": [
+    "conversation_id",
+    "text"
+  ]
+}

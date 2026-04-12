@@ -1,0 +1,44 @@
+{
+  "name": "Decision",
+  "type": "object",
+  "properties": {
+    "title": {
+      "type": "string",
+      "title": "T\u00edtulo"
+    },
+    "context": {
+      "type": "string",
+      "title": "Contexto"
+    },
+    "options": {
+      "type": "string",
+      "title": "Op\u00e7\u00f5es Consideradas"
+    },
+    "decision": {
+      "type": "string",
+      "title": "Decis\u00e3o Tomada"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "decided",
+        "implemented"
+      ],
+      "title": "Status",
+      "default": "pending"
+    },
+    "responsible": {
+      "type": "string",
+      "title": "Respons\u00e1vel"
+    },
+    "responsible_name": {
+      "type": "string",
+      "title": "Nome do Respons\u00e1vel"
+    }
+  },
+  "required": [
+    "title",
+    "context"
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "name": "Folder",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nome"
+    },
+    "parent_id": {
+      "type": "string",
+      "title": "ID da Pasta Pai"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

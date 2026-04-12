@@ -1,0 +1,38 @@
+{
+  "name": "Document",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nome"
+    },
+    "file_url": {
+      "type": "string",
+      "title": "URL do Arquivo"
+    },
+    "file_type": {
+      "type": "string",
+      "title": "Tipo do Arquivo"
+    },
+    "file_size": {
+      "type": "number",
+      "title": "Tamanho"
+    },
+    "folder_id": {
+      "type": "string",
+      "title": "ID da Pasta"
+    },
+    "author_name": {
+      "type": "string",
+      "title": "Nome do Autor"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "title": "Favorito",
+      "default": false
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

@@ -1,0 +1,49 @@
+{
+  "name": "Update",
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string",
+      "title": "Texto"
+    },
+    "image_url": {
+      "type": "string",
+      "title": "URL da Imagem"
+    },
+    "author_name": {
+      "type": "string",
+      "title": "Nome do Autor"
+    },
+    "author_email": {
+      "type": "string",
+      "title": "Email do Autor"
+    },
+    "reactions": {
+      "type": "object",
+      "title": "Rea\u00e7\u00f5es",
+      "properties": {
+        "fire": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "heart": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "clap": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "text"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "name": "Conversation",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Nome"
+    },
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Participantes"
+    },
+    "last_message": {
+      "type": "string",
+      "title": "\u00daltima Mensagem"
+    },
+    "last_message_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Data da \u00daltima Mensagem"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}

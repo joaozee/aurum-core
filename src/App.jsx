@@ -5,7 +5,15 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import AppLayout from './components/layout/AppLayout';
+import Dashboard from './pages/Dashboard';
+import Communication from './pages/Communication';
+import Updates from './pages/Updates';
+import Tasks from './pages/Tasks';
+import Decisions from './pages/Decisions';
+import Ideas from './pages/Ideas';
+import AurumAI from './pages/AurumAI';
+import Documents from './pages/Documents';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -33,8 +41,17 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <Routes>
-      {/* Add your page Route elements here */}
-      <Route path="*" element={<PageNotFound />} />
+      <Route element={<AppLayout />}>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/comunicacao" element={<Communication />} />
+        <Route path="/atualizacoes" element={<Updates />} />
+        <Route path="/tarefas" element={<Tasks />} />
+        <Route path="/decisoes" element={<Decisions />} />
+        <Route path="/ideias" element={<Ideas />} />
+        <Route path="/aurum-ai" element={<AurumAI />} />
+        <Route path="/documentos" element={<Documents />} />
+        <Route path="*" element={<PageNotFound />} />
+      </Route>
     </Routes>
   );
 };
