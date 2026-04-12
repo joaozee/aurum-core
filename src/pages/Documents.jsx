@@ -1,81 +1,131 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useOutletContext } from "react-router-dom";
-import { FolderPlus, Upload, Folder, File, Download, Star, ChevronRight, Grid, List, Clock, Heart } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { Button } from "@/components/ui/button";
+import { Search, Grid, List, FolderPlus, Upload, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import moment from "moment";
+import DocSidebar from "../components/documents/DocSidebar";
+import DocListView from "../components/documents/DocListView";
+import DocGridView from "../components/documents/DocGridView";
+import DocContextMenu from "../components/documents/DocContextMenu";
+import MoveToModal from "../components/documents/MoveToModal";
 
 export default function Documents() {
   const { user } = useOutletContext();
-  const [documents, setDocuments] = useState([]);
-  const [folders, setFolders] = useState([]);
-  const [currentFolder, setCurrentFolder] = useState(null);
+  const [allFolders, setAllFolders] = useState([]);
+  const [allFiles, setAllFiles] = useState([]);
+  const [currentFolderId, setCurrentFolderId] = useState(null);
   const [breadcrumbs, setBreadcrumbs] = useState([]);
-  const [view, setView] = useState("list");
   const [tab, setTab] = useState("docs");
-  const [showNewFolder, setShowNewFolder] = useState(false);
-  const [folderName, setFolderName] = useState("");
+  const [viewMode, setViewMode] = useState("list");
+  const [selectedId, setSelectedId] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  const loadData = async () => {
-    const [docs, flds] = await Promise.all([
-      base44.entities.Document.list("-created_date", 200),
-      base44.entities.Folder.list("name", 100),
+  // Dialogs
+  const [showNewFolder, setShowNewFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
+  const [renameItem, setRenameItem] = useState(null);
+  const [renameName, setRenameName] = useState("");
+  const [moveItem, setMoveItem] = useState(null);
+  const [contextMenu, setContextMenu] = useState(null); // { x, y, item }
+  const [dragSource, setDragSource] = useState(null);
+
+  const loadData = useCallback(async () => {
+    const [folders, files] = await Promise.all([
+      base44.entities.Folder.list("name", 500),
+      base44.entities.Document.list("-modified_date", 500),
     ]);
-    setDocuments(docs);
-    setFolders(flds);
-  };
+    setAllFolders(folders);
+    setAllFiles(files);
+  }, []);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const navigateTo = (folder) => {
-    if (folder) {
-      setCurrentFolder(folder.id);
-      setBreadcrumbs(prev => [...prev, folder]);
-    } else {
-      setCurrentFolder(null);
-      setBreadcrumbs([]);
-    }
+  // Navigate into folder
+  const navigateToFolder = (folder) => {
+    setCurrentFolderId(folder.id);
+    setBreadcrumbs(prev => {
+      // If already in breadcrumbs, slice to it
+      const idx = prev.findIndex(b => b.id === folder.id);
+      if (idx >= 0) return prev.slice(0, idx + 1);
+      return [...prev, folder];
+    });
     setTab("docs");
+    setSelectedId(null);
+    setSearchQuery("");
   };
 
-  const navigateBreadcrumb = (index) => {
+  const navigateToBreadcrumb = (index) => {
     if (index < 0) {
-      setCurrentFolder(null);
+      setCurrentFolderId(null);
       setBreadcrumbs([]);
     } else {
-      const folder = breadcrumbs[index];
-      setCurrentFolder(folder.id);
+      setCurrentFolderId(breadcrumbs[index].id);
       setBreadcrumbs(prev => prev.slice(0, index + 1));
     }
+    setSelectedId(null);
   };
 
-  const currentFolders = folders.filter(f => (f.parent_id || null) === currentFolder);
-  
-  const currentDocs = tab === "docs"
-    ? documents.filter(d => (d.folder_id || null) === currentFolder)
-    : tab === "recent"
-    ? [...documents].sort((a, b) => new Date(b.updated_date) - new Date(a.updated_date)).slice(0, 20)
-    : documents.filter(d => d.is_favorite);
+  const handleTabChange = (t) => {
+    setTab(t);
+    if (t !== "docs") {
+      setCurrentFolderId(null);
+      setBreadcrumbs([]);
+    }
+    setSelectedId(null);
+    setSearchQuery("");
+  };
 
-  const handleUpload = async () => {
+  // Compute displayed folders/files
+  const getDisplayItems = () => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      return {
+        folders: allFolders.filter(f => f.name.toLowerCase().includes(q)),
+        files: allFiles.filter(f => f.name.toLowerCase().includes(q)),
+      };
+    }
+    if (tab === "recent") {
+      return { folders: [], files: [...allFiles].sort((a, b) => new Date(b.modified_date || b.updated_date) - new Date(a.modified_date || a.updated_date)).slice(0, 20) };
+    }
+    if (tab === "favorites") {
+      return {
+        folders: allFolders.filter(f => f.is_favorite),
+        files: allFiles.filter(f => f.is_favorite),
+      };
+    }
+    return {
+      folders: allFolders.filter(f => (f.parent_folder_id || null) === currentFolderId),
+      files: allFiles.filter(f => (f.folder_id || null) === currentFolderId),
+    };
+  };
+
+  const { folders: displayFolders, files: displayFiles } = getDisplayItems();
+
+  // File open/download
+  const handleFileOpen = (file) => {
+    if (file.file_url) window.open(file.file_url, "_blank");
+  };
+
+  // Upload
+  const handleUpload = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.multiple = true;
     input.onchange = async (e) => {
       setUploading(true);
-      for (const file of e.target.files) {
+      for (const file of Array.from(e.target.files)) {
         const { file_url } = await base44.integrations.Core.UploadFile({ file });
         await base44.entities.Document.create({
           name: file.name,
           file_url,
-          file_type: file.type || file.name.split(".").pop(),
+          file_type: file.name.split(".").pop().toLowerCase(),
           file_size: file.size,
-          folder_id: currentFolder || undefined,
-          author_name: user?.full_name || "Usuário",
+          folder_id: currentFolderId || undefined,
+          author_name: user?.full_name || user?.email?.split("@")[0] || "Usuário",
+          modified_date: new Date().toISOString(),
         });
       }
       await loadData();
@@ -84,179 +134,250 @@ export default function Documents() {
     input.click();
   };
 
+  // Create folder
   const handleCreateFolder = async () => {
-    if (!folderName.trim()) return;
-    await base44.entities.Folder.create({ name: folderName.trim(), parent_id: currentFolder || undefined });
+    if (!newFolderName.trim()) return;
+    await base44.entities.Folder.create({
+      name: newFolderName.trim(),
+      parent_folder_id: currentFolderId || undefined,
+    });
     await loadData();
     setShowNewFolder(false);
-    setFolderName("");
+    setNewFolderName("");
   };
 
-  const toggleFavorite = async (doc) => {
-    await base44.entities.Document.update(doc.id, { is_favorite: !doc.is_favorite });
-    setDocuments(prev => prev.map(d => d.id === doc.id ? { ...d, is_favorite: !d.is_favorite } : d));
+  // Rename
+  const startRename = (item) => {
+    setRenameItem(item);
+    setRenameName(item.name);
+  };
+  const handleRename = async () => {
+    if (!renameName.trim()) return;
+    if (renameItem.type === "folder") {
+      await base44.entities.Folder.update(renameItem.id, { name: renameName.trim() });
+    } else {
+      await base44.entities.Document.update(renameItem.id, { name: renameName.trim(), modified_date: new Date().toISOString() });
+    }
+    await loadData();
+    setRenameItem(null);
   };
 
-  const sidebarItems = [
-    { id: "docs", icon: File, label: "Documentos" },
-    { id: "recent", icon: Clock, label: "Recentes" },
-    { id: "favorites", icon: Heart, label: "Favoritos" },
-  ];
+  // Favorite toggle
+  const handleToggleFavorite = async (item) => {
+    if (item.type === "folder") {
+      await base44.entities.Folder.update(item.id, { is_favorite: !item.is_favorite });
+    } else {
+      await base44.entities.Document.update(item.id, { is_favorite: !item.is_favorite });
+    }
+    await loadData();
+  };
+
+  // Delete
+  const handleDelete = async (item) => {
+    if (item.type === "folder") {
+      await base44.entities.Folder.delete(item.id);
+    } else {
+      await base44.entities.Document.delete(item.id);
+    }
+    await loadData();
+  };
+
+  // Move
+  const handleMove = async (targetFolderId) => {
+    if (!moveItem) return;
+    if (moveItem.type === "folder") {
+      await base44.entities.Folder.update(moveItem.id, { parent_folder_id: targetFolderId || undefined });
+    } else {
+      await base44.entities.Document.update(moveItem.id, { folder_id: targetFolderId || undefined, modified_date: new Date().toISOString() });
+    }
+    await loadData();
+    setMoveItem(null);
+  };
+
+  // Context menu actions
+  const handleContextAction = (action, item) => {
+    if (action === "open") {
+      if (item.type === "folder") navigateToFolder(item);
+      else handleFileOpen(item);
+    } else if (action === "download") {
+      handleFileOpen(item);
+    } else if (action === "rename") {
+      startRename(item);
+    } else if (action === "move") {
+      setMoveItem(item);
+    } else if (action === "favorite") {
+      handleToggleFavorite(item);
+    } else if (action === "delete") {
+      handleDelete(item);
+    }
+  };
+
+  // Drag and drop
+  const handleDragStart = (source) => setDragSource(source);
+  const handleDrop = async (target) => {
+    if (!dragSource || dragSource.id === target.id) return;
+    if (target.type !== "folder") return;
+    if (dragSource.type === "folder") {
+      await base44.entities.Folder.update(dragSource.id, { parent_folder_id: target.id });
+    } else {
+      await base44.entities.Document.update(dragSource.id, { folder_id: target.id, modified_date: new Date().toISOString() });
+    }
+    await loadData();
+    setDragSource(null);
+  };
+
+  const viewProps = {
+    folders: displayFolders,
+    files: displayFiles,
+    onFolderOpen: navigateToFolder,
+    onFileOpen: handleFileOpen,
+    onContextMenu: (e, item) => setContextMenu({ x: e.clientX, y: e.clientY, item }),
+    onToggleFavorite: handleToggleFavorite,
+    onDragStart: handleDragStart,
+    onDrop: handleDrop,
+    selectedId,
+    onSelect: setSelectedId,
+    searchQuery,
+  };
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] gap-0 rounded-xl overflow-hidden border border-border bg-card">
-      {/* Sidebar */}
-      <div className="w-56 border-r border-border flex flex-col shrink-0 p-3 space-y-4">
-        <div className="space-y-1">
-          <Button onClick={handleUpload} disabled={uploading} variant="outline" size="sm" className="w-full justify-start gap-2 text-xs border-border">
-            <Upload className="w-3.5 h-3.5" /> {uploading ? "Enviando..." : "Upload de Arquivo"}
-          </Button>
-          <Button onClick={() => setShowNewFolder(true)} variant="outline" size="sm" className="w-full justify-start gap-2 text-xs border-border">
-            <FolderPlus className="w-3.5 h-3.5" /> Nova Pasta
-          </Button>
-        </div>
+    <div
+      className="flex h-[calc(100vh-7.5rem)] rounded-xl overflow-hidden border border-border"
+      style={{ background: "#0a0a0a" }}
+      onClick={() => { setSelectedId(null); setContextMenu(null); }}
+    >
+      <DocSidebar
+        allFolders={allFolders}
+        currentFolderId={currentFolderId}
+        tab={tab}
+        onTabChange={handleTabChange}
+        onNavigate={navigateToFolder}
+        onUpload={handleUpload}
+        onNewFolder={() => setShowNewFolder(true)}
+        uploading={uploading}
+      />
 
-        <div className="space-y-0.5">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Navegação</p>
-          {sidebarItems.map(item => (
-            <button
-              key={item.id}
-              onClick={() => { setTab(item.id); if (item.id !== "docs") { setCurrentFolder(null); setBreadcrumbs([]); }}}
-              className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                tab === item.id ? "bg-gold/10 text-gold" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <item.icon className="w-3.5 h-3.5" /> {item.label}
-            </button>
-          ))}
-        </div>
-
-        {folders.filter(f => !f.parent_id).length > 0 && (
-          <div className="space-y-0.5">
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Pastas</p>
-            {folders.filter(f => !f.parent_id).map(f => (
-              <button
-                key={f.id}
-                onClick={() => navigateTo(f)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-xs transition-colors ${
-                  currentFolder === f.id ? "bg-gold/10 text-gold" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Folder className="w-3.5 h-3.5" /> {f.name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Main */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top bar */}
-        <div className="h-12 border-b border-border flex items-center justify-between px-4 shrink-0">
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <button onClick={() => navigateBreadcrumb(-1)} className="hover:text-foreground transition-colors">Documentos</button>
+        {/* Toolbar */}
+        <div className="h-12 border-b border-border flex items-center gap-3 px-4 shrink-0" style={{ background: "#111111" }}>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground flex-1 min-w-0 overflow-hidden">
+            <button onClick={() => navigateToBreadcrumb(-1)} className={`hover:text-foreground transition-colors whitespace-nowrap ${!currentFolderId && tab === "docs" ? "text-foreground" : ""}`}>
+              Documentos
+            </button>
+            {tab === "recent" && <><ChevronRight className="w-3 h-3 shrink-0" /><span className="text-foreground">Recentes</span></>}
+            {tab === "favorites" && <><ChevronRight className="w-3 h-3 shrink-0" /><span className="text-foreground">Favoritos</span></>}
             {breadcrumbs.map((bc, i) => (
-              <span key={bc.id} className="flex items-center gap-1">
-                <ChevronRight className="w-3 h-3" />
-                <button onClick={() => navigateBreadcrumb(i)} className="hover:text-foreground transition-colors">{bc.name}</button>
+              <span key={bc.id} className="flex items-center gap-1 min-w-0">
+                <ChevronRight className="w-3 h-3 shrink-0" />
+                <button
+                  onClick={() => navigateToBreadcrumb(i)}
+                  className={`hover:text-foreground transition-colors truncate ${i === breadcrumbs.length - 1 ? "text-foreground" : ""}`}
+                >
+                  {bc.name}
+                </button>
               </span>
             ))}
           </div>
-          <div className="flex gap-1">
-            <button onClick={() => setView("list")} className={`p-1.5 rounded ${view === "list" ? "text-gold" : "text-muted-foreground"}`}>
+
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Buscar..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="pl-8 h-7 text-xs bg-secondary border-border w-44"
+            />
+          </div>
+
+          {/* View toggle */}
+          <div className="flex gap-0.5">
+            <button onClick={() => setViewMode("list")} className={`p-1.5 rounded transition-colors ${viewMode === "list" ? "text-gold bg-gold/10" : "text-muted-foreground hover:text-foreground"}`}>
               <List className="w-4 h-4" />
             </button>
-            <button onClick={() => setView("grid")} className={`p-1.5 rounded ${view === "grid" ? "text-gold" : "text-muted-foreground"}`}>
+            <button onClick={() => setViewMode("grid")} className={`p-1.5 rounded transition-colors ${viewMode === "grid" ? "text-gold bg-gold/10" : "text-muted-foreground hover:text-foreground"}`}>
               <Grid className="w-4 h-4" />
             </button>
           </div>
+
+          <button
+            onClick={e => { e.stopPropagation(); setShowNewFolder(true); }}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-2.5 py-1"
+          >
+            <FolderPlus className="w-3.5 h-3.5" /> Nova Pasta
+          </button>
+          <button
+            onClick={e => { e.stopPropagation(); handleUpload(); }}
+            className="flex items-center gap-1.5 text-xs bg-gold hover:bg-gold-hover text-black rounded-lg px-2.5 py-1 font-medium transition-colors"
+          >
+            <Upload className="w-3.5 h-3.5" /> Upload
+          </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
-          {view === "list" ? (
-            <table className="w-full text-left">
-              <thead>
-                <tr className="text-[10px] text-muted-foreground uppercase tracking-wider border-b border-border">
-                  <th className="pb-2 font-medium">Nome</th>
-                  <th className="pb-2 font-medium">Autor</th>
-                  <th className="pb-2 font-medium">Modificado</th>
-                  <th className="pb-2 font-medium">Tipo</th>
-                  <th className="pb-2 font-medium w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {tab === "docs" && currentFolders.map(f => (
-                  <tr key={f.id} onClick={() => navigateTo(f)} className="border-b border-border hover:bg-secondary/50 cursor-pointer transition-colors">
-                    <td className="py-2.5 text-sm text-foreground flex items-center gap-2">
-                      <Folder className="w-4 h-4 text-gold" /> {f.name}
-                    </td>
-                    <td className="py-2.5 text-xs text-muted-foreground">—</td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{moment(f.updated_date).format("DD/MM/YY")}</td>
-                    <td className="py-2.5 text-xs text-muted-foreground">Pasta</td>
-                    <td></td>
-                  </tr>
-                ))}
-                {currentDocs.map(doc => (
-                  <tr key={doc.id} className="border-b border-border hover:bg-secondary/50 transition-colors">
-                    <td className="py-2.5 text-sm text-foreground flex items-center gap-2">
-                      <File className="w-4 h-4 text-muted-foreground" /> {doc.name}
-                    </td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{doc.author_name}</td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{moment(doc.updated_date).format("DD/MM/YY")}</td>
-                    <td className="py-2.5 text-xs text-muted-foreground">{doc.file_type || "—"}</td>
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => toggleFavorite(doc)} className={`${doc.is_favorite ? "text-gold" : "text-muted-foreground"} hover:text-gold transition-colors`}>
-                          <Star className="w-3.5 h-3.5" fill={doc.is_favorite ? "currentColor" : "none"} />
-                        </button>
-                        {doc.file_url && (
-                          <a href={doc.file_url} target="_blank" rel="noreferrer" className="text-muted-foreground hover:text-foreground transition-colors">
-                            <Download className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {currentDocs.length === 0 && currentFolders.length === 0 && (
-                  <tr><td colSpan={5} className="py-10 text-center text-sm text-muted-foreground">Nenhum documento</td></tr>
-                )}
-              </tbody>
-            </table>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-              {tab === "docs" && currentFolders.map(f => (
-                <button key={f.id} onClick={() => navigateTo(f)} className="bg-secondary rounded-xl p-4 text-center hover:border-gold/30 border border-transparent transition-colors">
-                  <Folder className="w-8 h-8 text-gold mx-auto mb-2" />
-                  <p className="text-xs text-foreground truncate">{f.name}</p>
-                </button>
-              ))}
-              {currentDocs.map(doc => (
-                <div key={doc.id} className="bg-secondary rounded-xl p-4 text-center border border-transparent hover:border-gold/30 transition-colors">
-                  <File className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-xs text-foreground truncate">{doc.name}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">{doc.author_name}</p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {viewMode === "list"
+          ? <DocListView {...viewProps} />
+          : <DocGridView {...viewProps} />
+        }
       </div>
 
+      {/* Context menu */}
+      {contextMenu && (
+        <DocContextMenu
+          x={contextMenu.x}
+          y={contextMenu.y}
+          item={contextMenu.item}
+          onClose={() => setContextMenu(null)}
+          onAction={(action) => handleContextAction(action, contextMenu.item)}
+        />
+      )}
+
+      {/* New Folder Dialog */}
       <Dialog open={showNewFolder} onOpenChange={setShowNewFolder}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border" onClick={e => e.stopPropagation()}>
           <DialogHeader><DialogTitle>Nova Pasta</DialogTitle></DialogHeader>
-          <div>
-            <Label className="text-xs text-muted-foreground">Nome da Pasta</Label>
-            <Input value={folderName} onChange={e => setFolderName(e.target.value)} className="bg-secondary border-border mt-1" />
-          </div>
+          <Input
+            autoFocus
+            placeholder="Nome da pasta"
+            value={newFolderName}
+            onChange={e => setNewFolderName(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleCreateFolder()}
+            className="bg-secondary border-border"
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowNewFolder(false)}>Cancelar</Button>
             <Button onClick={handleCreateFolder} className="bg-gold hover:bg-gold-hover text-black">Criar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Rename Dialog */}
+      <Dialog open={!!renameItem} onOpenChange={() => setRenameItem(null)}>
+        <DialogContent className="bg-card border-border" onClick={e => e.stopPropagation()}>
+          <DialogHeader><DialogTitle>Renomear</DialogTitle></DialogHeader>
+          <Input
+            autoFocus
+            value={renameName}
+            onChange={e => setRenameName(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && handleRename()}
+            className="bg-secondary border-border"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameItem(null)}>Cancelar</Button>
+            <Button onClick={handleRename} className="bg-gold hover:bg-gold-hover text-black">Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Move To Modal */}
+      <MoveToModal
+        open={!!moveItem}
+        onClose={() => setMoveItem(null)}
+        onMove={handleMove}
+        allFolders={allFolders}
+        excludeId={moveItem?.type === "folder" ? moveItem?.id : null}
+      />
     </div>
   );
 }

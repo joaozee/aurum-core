@@ -6,6 +6,10 @@
       "type": "string",
       "title": "Nome"
     },
+    "folder_id": {
+      "type": "string",
+      "title": "ID da Pasta"
+    },
     "file_url": {
       "type": "string",
       "title": "URL do Arquivo"
@@ -18,13 +22,14 @@
       "type": "number",
       "title": "Tamanho"
     },
-    "folder_id": {
-      "type": "string",
-      "title": "ID da Pasta"
-    },
     "author_name": {
       "type": "string",
       "title": "Nome do Autor"
+    },
+    "modified_date": {
+      "type": "string",
+      "format": "date-time",
+      "title": "Data de Modifica\u00e7\u00e3o"
     },
     "is_favorite": {
       "type": "boolean",

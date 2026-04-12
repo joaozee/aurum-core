@@ -6,9 +6,14 @@
       "type": "string",
       "title": "Nome"
     },
-    "parent_id": {
+    "parent_folder_id": {
       "type": "string",
-      "title": "ID da Pasta Pai"
+      "title": "Pasta Pai"
+    },
+    "is_favorite": {
+      "type": "boolean",
+      "title": "Favorito",
+      "default": false
     }
   },
   "required": [
