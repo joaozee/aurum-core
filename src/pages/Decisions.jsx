@@ -51,7 +51,7 @@ export default function Decisions() {
           <h1 className="text-2xl font-bold text-foreground">Aurum Board</h1>
           <p className="text-sm text-muted-foreground mt-1">Central de decisões estratégicas</p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="bg-gold hover:bg-gold-hover text-black gap-1.5">
+        <Button onClick={() => setShowModal(true)} className="hidden md:flex bg-gold hover:bg-gold-hover text-black gap-1.5">
           <Plus className="w-4 h-4" /> Nova Decisão
         </Button>
       </div>
@@ -91,6 +91,14 @@ export default function Decisions() {
           </div>
         ))}
       </div>
+
+      {/* Mobile FAB */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gold hover:bg-gold-hover text-black flex items-center justify-center shadow-lg"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="bg-card border-border max-w-lg">

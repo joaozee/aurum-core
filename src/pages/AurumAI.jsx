@@ -131,20 +131,21 @@ ${contextParts.join("\n\n")}`;
       </div>
 
       {/* Input */}
-      <div className="bg-card border border-border rounded-xl p-3 flex gap-3 items-end sticky bottom-6">
+      <div className="bg-card border border-border rounded-xl p-3 flex flex-col md:flex-row gap-2 md:gap-3 items-stretch md:items-end sticky bottom-6">
         <Textarea
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(input); }}}
           placeholder="Pergunte qualquer coisa ao Aurum AI..."
           className="bg-secondary border-border resize-none min-h-[48px] max-h-[120px] text-sm flex-1"
+          style={{ fontSize: "16px" }}
         />
         <Button
           onClick={() => sendMessage(input)}
           disabled={loading || !input.trim()}
-          className="bg-gold hover:bg-gold-hover text-black shrink-0"
+          className="bg-gold hover:bg-gold-hover text-black shrink-0 w-full md:w-auto min-h-[44px]"
         >
-          <Send className="w-4 h-4" />
+          <Send className="w-4 h-4 md:mr-0 mr-2" /> <span className="md:hidden">Perguntar</span>
         </Button>
       </div>
     </div>

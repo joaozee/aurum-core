@@ -54,27 +54,23 @@ export default function Ideas() {
           <h1 className="text-2xl font-bold text-foreground">Aurum Lab</h1>
           <p className="text-sm text-muted-foreground mt-1">Banco de ideias e inovação</p>
         </div>
-        <Button onClick={() => setShowModal(true)} className="bg-gold hover:bg-gold-hover text-black gap-1.5">
+        <Button onClick={() => setShowModal(true)} className="hidden md:flex bg-gold hover:bg-gold-hover text-black gap-1.5">
           <Plus className="w-4 h-4" /> Nova Ideia
         </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex gap-2 flex-wrap">
-        {filters.map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`text-xs px-3 py-1.5 rounded-full transition-colors ${
-              filter === f ? "bg-gold text-black font-medium" : "bg-secondary text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {filterLabels[f]}
-          </button>
-        ))}
-      </div>
+      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      {/* Mobile FAB */}
+      <button
+        onClick={() => setShowModal(true)}
+        className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gold hover:bg-gold-hover text-black flex items-center justify-center shadow-lg"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {filtered.length === 0 && (
           <p className="text-sm text-muted-foreground col-span-2 text-center py-10">Nenhuma ideia encontrada.</p>
         )}

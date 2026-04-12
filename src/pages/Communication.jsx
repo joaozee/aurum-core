@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
-import { Hash, Plus, Send, Search, Users } from "lucide-react";
+import { Hash, Plus, Send, Search, ArrowLeft } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ export default function Communication() {
   const [search, setSearch] = useState("");
   const [showNew, setShowNew] = useState(false);
   const [newName, setNewName] = useState("");
+  const [mobileShowChat, setMobileShowChat] = useState(false);
   const messagesEnd = useRef(null);
 
   useEffect(() => {
@@ -58,6 +59,11 @@ export default function Communication() {
     });
   };
 
+  const selectConv = (conv) => {
+    setSelected(conv);
+    setMobileShowChat(true);
+  };
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
     const conv = await base44.entities.Conversation.create({
@@ -65,7 +71,7 @@ export default function Communication() {
       participants: [user?.email],
     });
     setConversations(prev => [conv, ...prev]);
-    setSelected(conv);
+    selectConv(conv);
     setShowNew(false);
     setNewName("");
   };
@@ -73,9 +79,9 @@ export default function Communication() {
   const filtered = conversations.filter(c => c.name?.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="flex h-[calc(100vh-7.5rem)] gap-0 rounded-xl overflow-hidden border border-border bg-card">
-      {/* Sidebar */}
-      <div className="w-72 border-r border-border flex flex-col shrink-0">
+    <div className="flex h-[calc(100vh-7.5rem)] md:h-[calc(100vh-7.5rem)] rounded-xl overflow-hidden border border-border bg-card">
+      {/* Conversation List */}
+      <div className={`${mobileShowChat ? "hidden" : "flex"} md:flex w-full md:w-72 border-r border-border flex-col shrink-0`}>
         <div className="p-3 border-b border-border space-y-2">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">Conversas</h2>
@@ -97,7 +103,7 @@ export default function Communication() {
           {filtered.map(conv => (
             <button
               key={conv.id}
-              onClick={() => setSelected(conv)}
+              onClick={() => selectConv(conv)}
               className={`w-full text-left px-3 py-3 border-b border-border transition-colors ${
                 selected?.id === conv.id ? "bg-gold/10" : "hover:bg-secondary"
               }`}
@@ -115,7 +121,7 @@ export default function Communication() {
       </div>
 
       {/* Chat Area */}
-      <div className="flex-1 flex flex-col">
+      <div className={`${mobileShowChat ? "flex" : "hidden"} md:flex flex-1 flex-col`}>
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground">
             <Hash className="w-10 h-10 mb-3 opacity-30" />
@@ -124,6 +130,9 @@ export default function Communication() {
         ) : (
           <>
             <div className="h-12 border-b border-border flex items-center px-4 gap-2 shrink-0">
+              <button onClick={() => setMobileShowChat(false)} className="md:hidden text-muted-foreground hover:text-foreground transition-colors mr-1">
+                <ArrowLeft className="w-4 h-4" />
+              </button>
               <Hash className="w-4 h-4 text-gold" />
               <span className="text-sm font-semibold text-foreground">{selected.name}</span>
             </div>
@@ -154,6 +163,7 @@ export default function Communication() {
                 onKeyDown={e => e.key === "Enter" && handleSend()}
                 placeholder="Escreva uma mensagem..."
                 className="flex-1 bg-secondary border-border text-sm"
+                style={{ fontSize: "16px" }}
               />
               <Button onClick={handleSend} size="icon" className="bg-gold hover:bg-gold-hover text-black">
                 <Send className="w-4 h-4" />

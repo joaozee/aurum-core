@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { 
   LayoutDashboard, MessageSquare, Newspaper, CheckSquare, 
-  Scale, Lightbulb, Bot, FolderOpen, ChevronLeft, ChevronRight, LogOut
+  Scale, Lightbulb, Bot, FolderOpen, ChevronLeft, ChevronRight, LogOut, X
 } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 
@@ -32,9 +32,10 @@ export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobil
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
-        <div className="w-9 h-9 rounded-full bg-gold flex items-center justify-center shrink-0">
-          <span className="text-sm font-bold text-black">A</span>
-        </div>
+        {/* Mobile close button */}
+        <button onClick={onMobileClose} className="md:hidden text-muted-foreground hover:text-foreground transition-colors mr-1">
+          <X className="w-4 h-4" />
+        </button>
         {!collapsed && (
           <div className="overflow-hidden">
             <p className="text-foreground font-bold text-lg leading-tight tracking-wide">Aurum</p>

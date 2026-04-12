@@ -8,6 +8,7 @@ import { useRealTimeNotifications } from "@/hooks/useRealTimeNotifications";
 import { usePWA } from "@/hooks/usePWA";
 import InstallBanner from "../notifications/InstallBanner";
 import PermissionBanner from "../notifications/PermissionBanner";
+import BottomNav from "./BottomNav";
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -50,11 +51,12 @@ export default function AppLayout() {
             mobileOpen={mobileOpen}
             onMenuToggle={() => setMobileOpen(o => !o)}
           />
-          <main className="p-6 min-h-[calc(100vh-3.5rem)] overflow-auto">
+          <main className="p-4 md:p-6 pb-24 md:pb-6 min-h-[calc(100vh-3.5rem)] overflow-auto">
             <Outlet context={{ user }} />
           </main>
         </div>
       </div>
+      <BottomNav />
     </div>
   );
 }

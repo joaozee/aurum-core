@@ -10,6 +10,7 @@ import DocListView from "../components/documents/DocListView";
 import DocGridView from "../components/documents/DocGridView";
 import DocContextMenu from "../components/documents/DocContextMenu";
 import MoveToModal from "../components/documents/MoveToModal";
+import { Menu } from "lucide-react";
 
 export default function Documents() {
   const { user } = useOutletContext();
@@ -31,6 +32,7 @@ export default function Documents() {
   const [moveItem, setMoveItem] = useState(null);
   const [contextMenu, setContextMenu] = useState(null); // { x, y, item }
   const [dragSource, setDragSource] = useState(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     const [folders, files] = await Promise.all([
@@ -242,24 +244,42 @@ export default function Documents() {
 
   return (
     <div
-      className="flex h-[calc(100vh-7.5rem)] rounded-xl overflow-hidden border border-border"
+      className="flex h-[calc(100vh-7.5rem)] rounded-xl overflow-hidden border border-border relative"
       style={{ background: "#0a0a0a" }}
-      onClick={() => { setSelectedId(null); setContextMenu(null); }}
+      onClick={() => { setSelectedId(null); setContextMenu(null); setMobileSidebarOpen(false); }}
     >
-      <DocSidebar
-        allFolders={allFolders}
-        currentFolderId={currentFolderId}
-        tab={tab}
-        onTabChange={handleTabChange}
-        onNavigate={navigateToFolder}
-        onUpload={handleUpload}
-        onNewFolder={() => setShowNewFolder(true)}
-        uploading={uploading}
-      />
+      {/* Mobile sidebar overlay */}
+      {mobileSidebarOpen && (
+        <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+
+      <div className={`${
+        mobileSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+      } md:relative fixed left-0 top-0 h-full z-40 transition-transform duration-300`}
+        onClick={e => e.stopPropagation()}
+      >
+        <DocSidebar
+          allFolders={allFolders}
+          currentFolderId={currentFolderId}
+          tab={tab}
+          onTabChange={(t) => { handleTabChange(t); setMobileSidebarOpen(false); }}
+          onNavigate={(f) => { navigateToFolder(f); setMobileSidebarOpen(false); }}
+          onUpload={handleUpload}
+          onNewFolder={() => setShowNewFolder(true)}
+          uploading={uploading}
+        />
+      </div>
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Toolbar */}
         <div className="h-12 border-b border-border flex items-center gap-3 px-4 shrink-0" style={{ background: "#111111" }}>
+          {/* Mobile nav toggle */}
+          <button
+            onClick={e => { e.stopPropagation(); setMobileSidebarOpen(o => !o); }}
+            className="md:hidden flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors border border-border rounded-lg px-2.5 py-1 shrink-0"
+          >
+            <Menu className="w-3.5 h-3.5" /> Navegar
+          </button>
           {/* Breadcrumb */}
           <div className="flex items-center gap-1 text-xs text-muted-foreground flex-1 min-w-0 overflow-hidden">
             <button onClick={() => navigateToBreadcrumb(-1)} className={`hover:text-foreground transition-colors whitespace-nowrap ${!currentFolderId && tab === "docs" ? "text-foreground" : ""}`}>

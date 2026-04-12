@@ -66,7 +66,7 @@ export default function Updates() {
   const emojiMap = { fire: "🔥", heart: "❤️", clap: "👏" };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-4 md:space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Aurum Updates</h1>
         <p className="text-sm text-muted-foreground mt-1">Feed interno do Aurum Club</p>
@@ -118,7 +118,7 @@ export default function Updates() {
                   <button
                     key={key}
                     onClick={() => handleReaction(up.id, emoji)}
-                    className={`flex items-center gap-1 text-xs px-2.5 py-1 rounded-full transition-colors ${
+                    className={`flex items-center gap-1 text-xs px-3 py-2.5 md:px-2.5 md:py-1 rounded-full transition-colors min-h-[44px] md:min-h-0 ${
                       isActive ? "bg-gold/15 text-gold" : "bg-secondary text-muted-foreground hover:text-foreground"
                     }`}
                   >

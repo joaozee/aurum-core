@@ -20,6 +20,7 @@ export default function Tasks() {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [activeTag, setActiveTag] = useState(null);
+  const [mobileCol, setMobileCol] = useState("todo");
 
   useEffect(() => {
     base44.entities.Task.list("-created_date", 200).then(setTasks);
@@ -50,24 +51,43 @@ export default function Tasks() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Tarefas</h1>
           <p className="text-sm text-muted-foreground mt-1">Gestão de tarefas da equipe</p>
         </div>
+        {/* Desktop button */}
         <Button
           onClick={() => { setEditing(null); setModalOpen(true); }}
-          className="bg-gold hover:bg-gold-hover text-black gap-1.5"
+          className="hidden md:flex bg-gold hover:bg-gold-hover text-black gap-1.5"
         >
           <Plus className="w-4 h-4" /> Nova Tarefa
         </Button>
       </div>
 
-      <TaskFilterBar activeTag={activeTag} onFilterChange={setActiveTag} tasks={tasks} />
+      {/* Mobile column tabs */}
+      <div className="flex md:hidden border border-border rounded-lg overflow-hidden">
+        {columns.map(col => (
+          <button
+            key={col.id}
+            onClick={() => setMobileCol(col.id)}
+            className={`flex-1 py-2.5 text-xs font-medium transition-colors ${
+              mobileCol === col.id ? "bg-gold/15 text-gold" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {col.title}
+          </button>
+        ))}
+      </div>
+
+      <div className="overflow-x-auto pb-1">
+        <TaskFilterBar activeTag={activeTag} onFilterChange={setActiveTag} tasks={tasks} />
+      </div>
 
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* Desktop: 3-column kanban */}
+        <div className="hidden md:grid md:grid-cols-3 gap-4">
           {columns.map(col => {
             const colTasks = filteredTasks.filter(t => t.status === col.id);
             return (
@@ -104,7 +124,55 @@ export default function Tasks() {
             );
           })}
         </div>
+
+        {/* Mobile: single active column */}
+        <div className="md:hidden">
+          {columns.filter(col => col.id === mobileCol).map(col => {
+            const colTasks = filteredTasks.filter(t => t.status === col.id);
+            return (
+              <Droppable droppableId={col.id} key={col.id}>
+                {(provided, snapshot) => (
+                  <div
+                    ref={provided.innerRef}
+                    {...provided.droppableProps}
+                    className={`rounded-xl border border-border p-3 min-h-[200px] ${snapshot.isDraggingOver ? "border-gold/30" : ""}`}
+                    style={{ background: "#111111" }}
+                  >
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className={`w-2 h-2 rounded-full ${col.dotColor}`} />
+                      <span className="text-xs font-semibold text-foreground">{col.title}</span>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{colTasks.length}</span>
+                    </div>
+                    <div className="space-y-2">
+                      {colTasks.map((task, i) => (
+                        <Draggable draggableId={task.id} index={i} key={task.id}>
+                          {(provided) => (
+                            <TaskCard
+                              task={task}
+                              provided={provided}
+                              onClick={() => { setEditing(task); setModalOpen(true); }}
+                            />
+                          )}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+                    </div>
+                  </div>
+                )}
+              </Droppable>
+            );
+          })}
+        </div>
       </DragDropContext>
+
+      {/* Mobile FAB */}
+      <button
+        onClick={() => { setEditing(null); setModalOpen(true); }}
+        className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gold hover:bg-gold-hover text-black flex items-center justify-center shadow-lg"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      >
+        <Plus className="w-6 h-6" />
+      </button>
 
       <TaskModal
         open={modalOpen}
