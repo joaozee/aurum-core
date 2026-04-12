@@ -1,5 +1,6 @@
 import { X, Bell } from "lucide-react";
 import { useState, useEffect } from "react";
+import { showNotification } from "@/utils/notifications";
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const notifSupported = "Notification" in window;
@@ -10,7 +11,6 @@ export default function PermissionBanner() {
     notifSupported ? Notification.permission : "denied"
   );
 
-  // Re-verifica a permissão a cada 2 segundos (detecta mudança manual nas configs)
   useEffect(() => {
     if (!notifSupported) return;
     const interval = setInterval(() => {
@@ -59,10 +59,7 @@ export default function PermissionBanner() {
     Notification.requestPermission().then((perm) => {
       setPermission(perm);
       if (perm === "granted") {
-        new Notification("Aurum Core ✅", {
-          body: "Notificações ativadas com sucesso!",
-          icon: "/icon-192.png"
-        });
+        showNotification("Aurum Core ✅", "Notificações ativadas com sucesso!", "/");
         setHidden(true);
       }
     });

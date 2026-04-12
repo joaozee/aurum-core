@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { showNotification } from "@/utils/notifications";
 import { base44 } from "@/api/base44Client";
 
 export function useNotifications(user) {
@@ -19,12 +20,7 @@ export function useNotifications(user) {
     loadNotifications();
   }, [loadNotifications]);
 
-  // Register service worker
-  useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-  }, []);
+  // SW registration handled in main.jsx
 
   const requestPermission = async () => {
     const result = await Notification.requestPermission();
@@ -33,21 +29,7 @@ export function useNotifications(user) {
   };
 
   const sendBrowserNotification = async (title, body, link) => {
-    if (!('Notification' in window) || Notification.permission !== 'granted') return;
-    try {
-      const reg = await navigator.serviceWorker.ready;
-      await reg.showNotification(title, {
-        body,
-        icon: '/icon-192.png',
-        badge: '/icon-192.png',
-        vibrate: [200, 100, 200],
-        data: { url: link || '/' },
-        actions: [{ action: 'open', title: 'Abrir' }],
-      });
-    } catch {
-      // Fallback for desktop browsers without SW support
-      new Notification(title, { body, icon: '/icon-192.png' });
-    }
+    await showNotification(title, body, link || '/');
   };
 
   const createNotification = useCallback(async (userEmail, { type, title, body, link, icon }) => {

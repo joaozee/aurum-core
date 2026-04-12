@@ -1,5 +1,10 @@
-self.addEventListener('install', () => self.skipWaiting());
-self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
+self.addEventListener('install', function(event) {
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', function(event) {
+  event.waitUntil(clients.claim());
+});
 
 self.addEventListener('push', function(event) {
   const data = event.data ? event.data.json() : {};
@@ -10,8 +15,7 @@ self.addEventListener('push', function(event) {
     vibrate: [200, 100, 200],
     data: { url: data.url || '/' },
     actions: [
-      { action: 'open', title: 'Abrir' },
-      { action: 'close', title: 'Fechar' }
+      { action: 'open', title: 'Abrir' }
     ]
   };
   event.waitUntil(
@@ -21,9 +25,7 @@ self.addEventListener('push', function(event) {
 
 self.addEventListener('notificationclick', function(event) {
   event.notification.close();
-  if (event.action === 'open' || !event.action) {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url || '/')
-    );
-  }
+  event.waitUntil(
+    clients.openWindow(event.notification.data.url || '/')
+  );
 });
