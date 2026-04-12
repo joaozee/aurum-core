@@ -16,7 +16,7 @@ const menuItems = [
   { path: "/documentos", icon: FolderOpen, label: "Documentos" },
 ];
 
-export default function Sidebar({ collapsed, onToggle, user }) {
+export default function Sidebar({ collapsed, onToggle, user, mobileOpen, onMobileClose }) {
   const location = useLocation();
 
   const handleLogout = () => {
@@ -25,10 +25,10 @@ export default function Sidebar({ collapsed, onToggle, user }) {
 
   return (
     <aside 
-      className={`fixed left-0 top-0 h-screen z-40 flex flex-col border-r border-border transition-all duration-300 ${
-        collapsed ? "w-[68px]" : "w-[260px]"
-      }`}
-      style={{ background: "#111111" }}
+      className={`fixed left-0 top-0 h-screen z-40 flex flex-col border-r border-border transition-all duration-300
+        ${mobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"}
+      `}
+      style={{ background: "#111111", width: collapsed ? "68px" : "260px" }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 h-16 border-b border-border shrink-0">
@@ -51,6 +51,7 @@ export default function Sidebar({ collapsed, onToggle, user }) {
             <Link
               key={item.path}
               to={item.path}
+              onClick={onMobileClose}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200 group ${
                 isActive
                   ? "bg-gold/10 text-gold"
@@ -65,10 +66,10 @@ export default function Sidebar({ collapsed, onToggle, user }) {
         })}
       </nav>
 
-      {/* Toggle */}
+      {/* Toggle - desktop only */}
       <button
         onClick={onToggle}
-        className="mx-auto mb-2 w-7 h-7 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+        className="hidden md:flex mx-auto mb-2 w-7 h-7 rounded-full border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
       >
         {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
       </button>

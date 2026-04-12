@@ -11,6 +11,7 @@ import PermissionBanner from "../notifications/PermissionBanner";
 
 export default function AppLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -25,10 +26,30 @@ export default function AppLayout() {
     <div className="min-h-screen flex flex-col" style={{ background: "#0a0a0a" }}>
       {showInstall && <InstallBanner onInstall={install} onDismiss={dismissInstall} />}
       {notif.permissionState === "default" && <PermissionBanner onRequest={notif.requestPermission} />}
-      <div className="flex flex-1">
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} user={user} />
-        <div className={`transition-all duration-300 flex-1 flex flex-col ${collapsed ? "ml-[68px]" : "ml-[260px]"}`}>
-          <Header notifications={notif.notifications} unreadCount={notif.unreadCount} onMarkAllRead={notif.markAllRead} onMarkRead={notif.markRead} />
+      <div className="flex flex-1 relative">
+        {/* Mobile overlay */}
+        {mobileOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-30 md:hidden"
+            onClick={() => setMobileOpen(false)}
+          />
+        )}
+        <Sidebar
+          collapsed={collapsed}
+          onToggle={() => setCollapsed(!collapsed)}
+          user={user}
+          mobileOpen={mobileOpen}
+          onMobileClose={() => setMobileOpen(false)}
+        />
+        <div className={`transition-all duration-300 flex-1 flex flex-col ${collapsed ? "md:ml-[68px]" : "md:ml-[260px]"}`}>
+          <Header
+            notifications={notif.notifications}
+            unreadCount={notif.unreadCount}
+            onMarkAllRead={notif.markAllRead}
+            onMarkRead={notif.markRead}
+            mobileOpen={mobileOpen}
+            onMenuToggle={() => setMobileOpen(o => !o)}
+          />
           <main className="p-6 min-h-[calc(100vh-3.5rem)] overflow-auto">
             <Outlet context={{ user }} />
           </main>
