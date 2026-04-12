@@ -1,16 +1,28 @@
 import { X, Bell } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 const notifSupported = "Notification" in window;
 
 export default function PermissionBanner() {
   const [hidden, setHidden] = useState(false);
+  const [permission, setPermission] = useState(
+    notifSupported ? Notification.permission : "denied"
+  );
+
+  // Re-verifica a permissão a cada 2 segundos (detecta mudança manual nas configs)
+  useEffect(() => {
+    if (!notifSupported) return;
+    const interval = setInterval(() => {
+      setPermission(Notification.permission);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (hidden) return null;
-  if (notifSupported && Notification.permission === "granted") return null;
+  if (permission === "granted") return null;
 
-  if (notifSupported && Notification.permission === "denied") {
+  if (permission === "denied") {
     return (
       <div className="w-full bg-secondary border-b border-border px-4 py-2.5 flex items-center gap-3">
         <Bell className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -42,17 +54,17 @@ export default function PermissionBanner() {
   const handleActivate = () => {
     if (!notifSupported) {
       alert("Seu navegador não suporta notificações.");
-      setHidden(true);
       return;
     }
-    Notification.requestPermission().then((permission) => {
-      if (permission === "granted") {
-        new Notification("Aurum Core", {
-          body: "Notificações ativadas com sucesso! ✅",
+    Notification.requestPermission().then((perm) => {
+      setPermission(perm);
+      if (perm === "granted") {
+        new Notification("Aurum Core ✅", {
+          body: "Notificações ativadas com sucesso!",
           icon: "/icon-192.png"
         });
+        setHidden(true);
       }
-      setHidden(true);
     });
   };
 
