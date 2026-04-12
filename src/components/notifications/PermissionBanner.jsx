@@ -2,22 +2,24 @@ import { X, Bell } from "lucide-react";
 import { useState } from "react";
 
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isInstalledPWA = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+const notifSupported = "Notification" in window;
 
 export default function PermissionBanner() {
   const [hidden, setHidden] = useState(false);
 
   if (hidden) return null;
 
-  // Already granted — no banner needed
-  if ("Notification" in window && Notification.permission === "granted") return null;
+  // Already granted — no banner
+  if (notifSupported && Notification.permission === "granted") return null;
 
-  // Already denied — show blocked message
-  if ("Notification" in window && Notification.permission === "denied") {
+  // Denied — show settings instruction
+  if (notifSupported && Notification.permission === "denied") {
     return (
       <div className="w-full bg-secondary border-b border-border px-4 py-2.5 flex items-center gap-3">
         <Bell className="w-4 h-4 text-muted-foreground shrink-0" />
         <p className="text-xs text-muted-foreground flex-1">
-          Notificações bloqueadas. Ative nas configurações do seu navegador.
+          Notificações bloqueadas. Acesse as configurações do Android para reativar.
         </p>
         <button onClick={() => setHidden(true)} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
           <X className="w-4 h-4" />
@@ -26,15 +28,14 @@ export default function PermissionBanner() {
     );
   }
 
-  // iOS — show install instructions, no Ativar button
-  if (isIOS) {
+  // iOS — show install instructions
+  if (isIOS && !isInstalledPWA) {
     return (
       <div className="w-full bg-secondary border-b border-border px-4 py-3 flex items-start gap-3">
-        <Bell className="w-4 h-4 text-gold shrink-0 mt-0.5" />
+        <span className="shrink-0 mt-0.5">📲</span>
         <p className="text-xs text-muted-foreground flex-1">
-          No iPhone, instale o app primeiro: toque em{" "}
-          <span className="text-foreground font-medium">Compartilhar → Adicionar à Tela de Início</span>.
-          Depois ative as notificações.
+          Para ativar notificações no iPhone, instale o app: toque em{" "}
+          <span className="text-foreground font-medium">Compartilhar → Adicionar à Tela de Início</span>
         </p>
         <button onClick={() => setHidden(true)} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
           <X className="w-4 h-4" />
@@ -43,8 +44,25 @@ export default function PermissionBanner() {
     );
   }
 
+  // Running in browser tab (not installed PWA) — show install instruction, no Ativar button
+  if (!isInstalledPWA) {
+    return (
+      <div className="w-full bg-secondary border-b border-border px-4 py-3 flex items-start gap-3">
+        <span className="shrink-0 mt-0.5">📲</span>
+        <p className="text-xs text-muted-foreground flex-1">
+          Para ativar notificações, instale o Aurum Core: toque no menu do Chrome →{" "}
+          <span className="text-foreground font-medium">'Adicionar à tela inicial'</span>
+        </p>
+        <button onClick={() => setHidden(true)} className="text-muted-foreground hover:text-foreground transition-colors shrink-0">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    );
+  }
+
+  // Installed PWA — show normal banner with Ativar button
   const handleActivateNotifications = () => {
-    if (!("Notification" in window)) {
+    if (!notifSupported) {
       alert("Seu navegador não suporta notificações.");
       setHidden(true);
       return;

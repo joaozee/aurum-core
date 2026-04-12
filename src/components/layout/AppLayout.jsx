@@ -33,7 +33,7 @@ export default function AppLayout() {
         />
       )}
       {showInstall && <InstallBanner onInstall={install} onDismiss={dismissInstall} />}
-      {notif.permissionState === "default" && <PermissionBanner />}
+      <PermissionBanner />
       <div className="flex flex-1 relative">
         <Sidebar
           collapsed={collapsed}
@@ -56,6 +56,18 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
+      {showInstall && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-gold/10 border-t border-gold/30 px-4 py-3 flex items-center gap-3 md:hidden">
+          <span className="text-lg">📲</span>
+          <p className="text-xs text-foreground flex-1 font-medium">Instalar Aurum Core</p>
+          <button
+            onClick={install}
+            className="text-xs bg-gold hover:bg-gold-hover text-black font-semibold px-4 py-1.5 rounded-lg transition-colors shrink-0"
+          >
+            Instalar
+          </button>
+        </div>
+      )}
       <BottomNav />
     </div>
   );
