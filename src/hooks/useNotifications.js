@@ -51,11 +51,15 @@ export function useNotifications(user) {
   // Real-time: subscribe to new notifications for this user
   useEffect(() => {
     if (!user?.email) return;
+    const subscribeTime = new Date();
     const unsub = base44.entities.Notification.subscribe((event) => {
-      if (event.type === "create" && event.data?.user_email === user.email) {
-        setNotifications(prev => [event.data, ...prev].slice(0, 20));
-        sendBrowserNotification(event.data.title, event.data.body, event.data.link);
-      }
+      if (event.type !== "create") return;
+      const record = event.data;
+      if (!record || record.user_email !== user.email) return;
+      // Only trigger for records created AFTER the subscription was initialized
+      if (record.created_date && new Date(record.created_date) <= subscribeTime) return;
+      setNotifications(prev => [record, ...prev].slice(0, 20));
+      sendBrowserNotification(record.title, record.body, record.link);
     });
     return unsub;
   }, [user?.email]);
